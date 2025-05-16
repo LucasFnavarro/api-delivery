@@ -84,7 +84,6 @@ export async function userRoutes(app: FastifyInstance) {
         }
 
         try {
-
             const data = await prisma.user.findUnique({
                 where: {
                     id: result.data.id
