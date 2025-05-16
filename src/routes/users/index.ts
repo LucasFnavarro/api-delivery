@@ -146,7 +146,31 @@ export async function userRoutes(app: FastifyInstance) {
         }
     })
 
-    
+    app.delete('/delete/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+        const paramsSchema = z.object({
+            id: z.string().uuid('O id informado não é um uuid válido')
+        })
+
+        const result = paramsSchema.safeParse(req.params)
+
+        if (!result.success) {
+            console.log('Erro ao tentar deletar o usuário', result.error)
+            return reply.status(400).send({ message: 'Erro ao tentar deletar o usuário, tente novamente!' })
+        }
+
+        try {
+            await prisma.user.delete({
+                where: {
+                    id: result.data.id
+                }
+            })
+
+            return reply.status(200).send({ message: 'Usuário deletado com sucesso' })
+        } catch (error) {
+            console.log('Erro ao tentar deletar o usuário', error)
+            return reply.status(500).send({ message: 'Erro ao tentar deletar o usuário, tente novamente!' })
+        }
+    })
 
 }
 
