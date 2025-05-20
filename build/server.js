@@ -5,6 +5,10 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,13 +25,17 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/server.ts
+var server_exports = {};
+__export(server_exports, {
+  app: () => app
+});
+module.exports = __toCommonJS(server_exports);
 var import_fastify = __toESM(require("fastify"));
 var app = (0, import_fastify.default)();
-app.get("/", () => {
-  return "Hello World";
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  app
 });
-app.listen({
-  port: 3333
-}).then(() => console.log("Server is running on port 3333 \u{1F680}\u{1F3C6}"));

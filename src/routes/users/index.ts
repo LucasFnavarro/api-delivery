@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { hash } from 'bcryptjs'
+import { verifyJwt } from '@/middlewares/verify-jwt'
 
 const userSchema = z.object({
     name: z.string().min(3),
@@ -45,10 +46,9 @@ export async function userRoutes(app: FastifyInstance) {
             console.log('Erro ao criar um usuário', error)
             return reply.status(500).send({ message: 'Erro ao criar um usuário' })
         }
-
     })
 
-    app.get('/list', async (req: FastifyRequest, reply: FastifyReply) => {
+    app.get('/list', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
         try {
             const data = await prisma.user.findMany({
                 select: {
@@ -71,7 +71,7 @@ export async function userRoutes(app: FastifyInstance) {
 
     })
 
-    app.get('/get/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+    app.get('/get/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
         const paramsSchema = z.object({
             id: z.string().uuid('O id informado não é um uuid válido')
         })
@@ -94,7 +94,8 @@ export async function userRoutes(app: FastifyInstance) {
                     email: true,
                     createdAt: true,
                     updatedAt: true,
-                }
+                    address: true,
+                },
             })
 
             if (!data) {
@@ -109,7 +110,7 @@ export async function userRoutes(app: FastifyInstance) {
         }
     })
 
-    app.put('/update/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+    app.put('/update/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
         const paramsSchema = z.object({
             id: z.string().uuid('O id informado não é um uuid válido')
         })
@@ -122,7 +123,6 @@ export async function userRoutes(app: FastifyInstance) {
             console.log('Erro ao tentar atualizar o usuário', resultParams.error, resultBody.error)
             return reply.status(400).send({ message: 'Erro ao tentar atualizar o usuário, tente novamente!' })
         }
-
 
         const { id } = resultParams.data
         const { name, email, password } = resultBody.data
@@ -145,7 +145,7 @@ export async function userRoutes(app: FastifyInstance) {
         }
     })
 
-    app.delete('/delete/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+    app.delete('/delete/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
         const paramsSchema = z.object({
             id: z.string().uuid('O id informado não é um uuid válido')
         })
@@ -170,6 +170,4 @@ export async function userRoutes(app: FastifyInstance) {
             return reply.status(500).send({ message: 'Erro ao tentar deletar o usuário, tente novamente!' })
         }
     })
-
 }
-

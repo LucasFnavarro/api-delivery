@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/app.ts",
     "start": "node build/server.js",
     "build": "tsup src --out-dir build"
   },
@@ -16,9 +16,11 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",
     "fastify": "^5.3.3",
+    "jsonwebtoken": "^9.0.2",
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.18",
     "prisma": "^6.8.1",
     "tsup": "^8.4.0",
