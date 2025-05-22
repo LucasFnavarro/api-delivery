@@ -12,8 +12,12 @@ const addressSchema = z.object({
     zipCode: z.string().regex(/^\d{5}-\d{3}$/, 'CEP inválido'),
 })
 
-export async function addressRoutes(app: FastifyInstance) {
-    app.post('/create', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+const idParamsSchema = z.object({
+    id: z.string().uuid('O id informado não é um uuid válido')
+})
+
+export default async function (app: FastifyInstance) {
+    app.post('/address', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
 
         const result = addressSchema.safeParse(req.body)
 
@@ -42,9 +46,10 @@ export async function addressRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/list', {
+    app.get('/admin/address', {
         preHandler: [verifyJwt, onlyAdmin]
     }, async (req: FastifyRequest, reply: FastifyReply) => {
+
         try {
             const address = await prisma.address.findMany({
                 include: {
@@ -67,12 +72,38 @@ export async function addressRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/get/:id', async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid()
-        })
+    app.get('/address', {
+        preHandler: [verifyJwt, onlyAdmin]
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
 
-        const result = bodySchema.safeParse(req.params)
+        try {
+            const address = await prisma.address.findMany({
+                where: {
+                    user_id: req.user.sub
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            })
+
+            return reply.status(200).send({ address })
+        } catch (err) {
+            console.error('Erro ao listar endereços')
+            return reply.status(500).send({ message: 'Erro ao listar endereços' })
+        }
+    })
+
+    app.get('/address/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             return reply.status(400).send({ message: 'Erro ao buscar o endereço, verifique os dados informados.' })
@@ -101,13 +132,9 @@ export async function addressRoutes(app: FastifyInstance) {
         }
     })
 
-    app.put('/update/:id', async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid(),
-        })
-
+    app.put('/address/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
         const resultBody = addressSchema.safeParse(req.body)
-        const resultParams = bodySchema.safeParse(req.params)
+        const resultParams = idParamsSchema.safeParse(req.params)
 
         if (!resultBody.success || !resultParams.success) {
             return reply.status(400).send({ message: 'Erro ao editar um produto, verifique os dados informados.' })
@@ -135,12 +162,9 @@ export async function addressRoutes(app: FastifyInstance) {
         }
     })
 
-    app.delete('/delete/:id', async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid('O id informado não é um uuid válido')
-        })
+    app.delete('/address/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
 
-        const result = bodySchema.safeParse(req.params)
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             return reply.status(400).send({ message: 'Erro ao excluir o endereço' })

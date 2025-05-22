@@ -20,6 +20,19 @@ enum UserRole {
   COLABORATOR
 }
 
+enum OrderStatus {
+  PENDENTE
+  PREPARANDO
+  ENTREGUE
+  CANCELADO
+}
+
+enum PaymentMethod {
+  PIX
+  CARTAO
+  DINHEIRO
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -94,15 +107,15 @@ model OrderItem {
   order   Order   @relation(fields: [order_id], references: [id])
   product Product @relation(fields: [product_id], references: [id])
 
-  order_id   String @unique
+  order_id   String
   product_id String
 }
 
 model Payment {
-  id        String   @id @default(uuid())
-  method    String // "pix", "cartão", "dinheiro"
-  status    String // "pendente", "aprovado", "rejeitado"
-  createdAt DateTime @default(now())
+  id        String        @id @default(uuid())
+  method    PaymentMethod // "pix", "cartão", "dinheiro"
+  status    OrderStatus   @default(PENDENTE) // "pendente", "aprovado", "rejeitado"
+  createdAt DateTime      @default(now())
 
   order    Order? @relation(fields: [order_id], references: [id])
   order_id String @unique

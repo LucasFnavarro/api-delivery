@@ -10,8 +10,12 @@ const userSchema = z.object({
     password: z.string().min(6)
 })
 
-export async function userRoutes(app: FastifyInstance) {
-    app.post('/create', async (req: FastifyRequest, reply: FastifyReply) => {
+const idParamsSchema = z.object({
+    id: z.string().uuid('O id informado não é um uuid válido')
+})
+
+export default async function (app: FastifyInstance) {
+    app.post('/user', async (req: FastifyRequest, reply: FastifyReply) => {
         const result = userSchema.safeParse(req.body)
 
         if (!result.success) {
@@ -48,7 +52,7 @@ export async function userRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/list', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+    app.get('/users', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
         try {
             const data = await prisma.user.findMany({
                 select: {
@@ -71,12 +75,8 @@ export async function userRoutes(app: FastifyInstance) {
 
     })
 
-    app.get('/get/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
-        const paramsSchema = z.object({
-            id: z.string().uuid('O id informado não é um uuid válido')
-        })
-
-        const result = paramsSchema.safeParse(req.params)
+    app.get('/user/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             console.log('Erro ao buscar o usuário', result.error)
@@ -110,13 +110,8 @@ export async function userRoutes(app: FastifyInstance) {
         }
     })
 
-    app.put('/update/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
-        const paramsSchema = z.object({
-            id: z.string().uuid('O id informado não é um uuid válido')
-        })
-
-
-        const resultParams = paramsSchema.safeParse(req.params)
+    app.put('/user/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const resultParams = idParamsSchema.safeParse(req.params)
         const resultBody = userSchema.safeParse(req.body)
 
         if (!resultParams.success || !resultBody.success) {
@@ -145,12 +140,8 @@ export async function userRoutes(app: FastifyInstance) {
         }
     })
 
-    app.delete('/delete/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
-        const paramsSchema = z.object({
-            id: z.string().uuid('O id informado não é um uuid válido')
-        })
-
-        const result = paramsSchema.safeParse(req.params)
+    app.delete('/user/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             console.log('Erro ao tentar deletar o usuário', result.error)

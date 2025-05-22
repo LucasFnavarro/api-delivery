@@ -4,7 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { verifyJwt } from "@/middlewares/verify-jwt";
 import { onlyAdmin } from "@/middlewares/verify-role";
 
-export async function categoryRoutes(app: FastifyInstance) {
+const idParamsSchema = z.object({
+    id: z.string().uuid('ID inválido!')
+})
+
+const categorySchema = z.object({
+    name: z.string()
+})
+
+export default async function (app: FastifyInstance) {
     app.post('/create', async (req: FastifyRequest, reply: FastifyReply) => {
         const bodySchema = z.object({
             name: z.string(),
@@ -43,9 +51,7 @@ export async function categoryRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/list', {
-        preHandler: [verifyJwt, onlyAdmin]
-    }, async (req: FastifyRequest, reply: FastifyReply) => {
+    app.get('/list', { preHandler: [verifyJwt, onlyAdmin] }, async (req: FastifyRequest, reply: FastifyReply) => {
         try {
             const categories = await prisma.category.findMany({
                 select: {
@@ -64,12 +70,8 @@ export async function categoryRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/get/:id', async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid()
-        })
-
-        const result = bodySchema.safeParse(req.params)
+    app.get('/get/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             return reply.status(400).send({ message: 'Erro ao buscar a categoria, verifique os dados informados.' })
@@ -88,6 +90,54 @@ export async function categoryRoutes(app: FastifyInstance) {
         } catch (err) {
             console.log('Erro ao buscar uma categoria')
             return reply.status(500).send({ message: 'Erro ao buscar uma categoria' })
+        }
+    })
+
+    app.put('/update/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+
+        const result = idParamsSchema.safeParse(req.params)
+        const resultBody = categorySchema.safeParse(req.body)
+
+        if (!result.success || !resultBody.success) {
+            return reply.status(400).send({ message: 'Erro ao atualizar a categoria, verifique os dados informados.' })
+        }
+
+        const { id } = result.data
+        const { name } = resultBody.data
+
+        try {
+            const category = await prisma.category.update({
+                where: { id },
+                data: {
+                    name
+                }
+            })
+
+            return reply.status(200).send({ message: 'Categoria atualizada com sucesso', category })
+        } catch (err) {
+            console.log('Erro ao atualizar uma categoria')
+            return reply.status(500).send({ message: 'Erro ao atualizar uma categoria' })
+        }
+    })
+
+    app.delete('/delete/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const result = idParamsSchema.safeParse(req.params)
+
+        if (!result.success) {
+            return reply.status(400).send({ message: 'Erro ao deletar a categoria, verifique os dados informados.' })
+        }
+
+        const { id } = result.data
+
+        try {
+            await prisma.category.delete({
+                where: { id }
+            })
+
+            return reply.status(200).send({ message: 'Categoria deletada com sucesso' })
+        } catch (err) {
+            console.log('Erro ao deletar uma categoria')
+            return reply.status(500).send({ message: 'Erro ao deletar uma categoria' })
         }
     })
 }

@@ -11,8 +11,13 @@ const productSchema = z.object({
     category_id: z.string()
 })
 
-export async function productRoutes(app: FastifyInstance) {
-    app.post('/create', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+const idParamsSchema = z.object({
+    id: z.string().uuid()
+})
+
+export default async function (app: FastifyInstance) {
+    app.post('/products', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        
         const result = productSchema.safeParse(req.body)
 
         if (!result.success) {
@@ -50,7 +55,8 @@ export async function productRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/list', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+    app.get('/products', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        
         try {
             const products = await prisma.product.findMany({
                 include: {
@@ -73,12 +79,9 @@ export async function productRoutes(app: FastifyInstance) {
         }
     })
 
-    app.get('/get/:id', async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid()
-        })
-
-        const result = bodySchema.safeParse(req.params)
+    app.get('/products/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+        
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             return reply.status(400).send({ message: 'Erro ao buscar o produto, verifique os dados informados.' })
@@ -107,13 +110,10 @@ export async function productRoutes(app: FastifyInstance) {
         }
     })
 
-    app.put('/update/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid(),
-        })
-
+    app.put('/products/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        
         const resultBody = productSchema.safeParse(req.body)
-        const resultParams = bodySchema.safeParse(req.params)
+        const resultParams = idParamsSchema.safeParse(req.params)
 
         if (!resultBody.success || !resultParams.success) {
             return reply.status(400).send({ message: 'Erro ao editar um produto, verifique os dados informados.' })
@@ -141,12 +141,9 @@ export async function productRoutes(app: FastifyInstance) {
         }
     })
 
-    app.delete('/delete/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
-        const bodySchema = z.object({
-            id: z.string().uuid('O id informado não é um uuid válido')
-        })
-
-        const result = bodySchema.safeParse(req.params)
+    app.delete('/products/:id', { preHandler: verifyJwt }, async (req: FastifyRequest, reply: FastifyReply) => {
+        
+        const result = idParamsSchema.safeParse(req.params)
 
         if (!result.success) {
             return reply.status(400).send({ message: 'Erro ao deletar um produto, verifique os dados informados.' })
